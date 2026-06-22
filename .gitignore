@@ -1,0 +1,11 @@
+node_modules/
+vendor/
+vendor-bin/*/vendor/
+js/
+css/
+build/
+test-results/
+playwright-report/
+.test-fixtures/
+.php-cs-fixer.cache
+.DS_Store

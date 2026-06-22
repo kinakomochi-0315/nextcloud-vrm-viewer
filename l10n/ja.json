@@ -1,0 +1,17 @@
+{
+	"translations": {
+		"Open in VRM Viewer": "VRM Viewerで開く",
+		"Loading VRM model…": "VRMモデルを読み込んでいます…",
+		"Preparing 3D preview…": "3Dプレビューを準備しています…",
+		"Reset camera": "カメラをリセット",
+		"Retry": "再試行",
+		"Unable to display this VRM file": "このVRMファイルを表示できません",
+		"The file could not be downloaded. Check your connection and permissions.": "ファイルを取得できませんでした。接続状態と権限を確認してください。",
+		"This VRM file references external resources and cannot be displayed safely.": "このVRMファイルは外部リソースを参照しているため、安全に表示できません。",
+		"The selected file does not contain valid VRM data.": "選択したファイルに有効なVRMデータが含まれていません。",
+		"WebGL is not available in this browser.": "このブラウザーではWebGLを利用できません。",
+		"An unexpected error occurred while rendering the model.": "モデルの描画中に予期しないエラーが発生しました。"
+	},
+	"pluralForm": "nplurals=1; plural=0;"
+}
+
