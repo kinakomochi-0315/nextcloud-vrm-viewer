@@ -47,7 +47,6 @@ function mountViewer(active: boolean) {
 				template: '<button @click="$emit(\'click\')"><slot name="icon" /><slot /></button>',
 			},
 			NcIconSvgWrapper: true,
-			NcLoadingIcon: true,
 		},
 	})
 }
@@ -67,6 +66,20 @@ describe('VrmViewer', () => {
 
 		expect(loadVrmSpy).not.toHaveBeenCalled()
 		expect(wrapper.attributes('data-vrm-state')).toBe('idle')
+		wrapper.destroy()
+	})
+
+	it('読み込み中はNextcloud Viewer側のローディング表示だけを使用する', async () => {
+		vi.spyOn(vrmViewerDependencies, 'loadVrm').mockReturnValue(
+			new Promise(() => {}),
+		)
+		const wrapper = mountViewer(true)
+		await Vue.nextTick()
+
+		expect(wrapper.attributes('data-vrm-state')).toBe('loading')
+		expect(wrapper.findComponent({ name: 'NcLoadingIcon' }).exists()).toBe(false)
+		expect(wrapper.find('[role="status"]').exists()).toBe(false)
+		expect(wrapper.emitted('update:loaded')?.at(-1)).toEqual([false])
 		wrapper.destroy()
 	})
 

@@ -7,8 +7,6 @@ OC.L10N.register(
 	'files_vrmviewer',
 	{
 		'Open in VRM Viewer': 'VRM Viewerで開く',
-		'Loading VRM model…': 'VRMモデルを読み込んでいます…',
-		'Preparing 3D preview…': '3Dプレビューを準備しています…',
 		'Reset camera': 'カメラをリセット',
 		'Retry': '再試行',
 		'Unable to display this VRM file': 'このVRMファイルを表示できません',
@@ -20,4 +18,3 @@ OC.L10N.register(
 	},
 	'nplurals=1; plural=0;',
 )
-

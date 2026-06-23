@@ -11,15 +11,7 @@
 			class="vrm-viewer__canvas-host"
 			:aria-busy="state === 'loading' || state === 'preparing'" />
 
-		<div v-if="state === 'loading' || state === 'preparing'"
-			class="vrm-viewer__overlay"
-			role="status"
-			aria-live="polite">
-			<NcLoadingIcon :size="48" />
-			<p>{{ loadingMessage }}</p>
-		</div>
-
-		<div v-else-if="state === 'error'"
+		<div v-if="state === 'error'"
 			class="vrm-viewer__overlay vrm-viewer__overlay--error"
 			role="alert">
 			<NcIconSvgWrapper :svg="alertIcon"
@@ -64,7 +56,6 @@ import restoreIcon from '@mdi/svg/svg/restore.svg?raw'
 import { translate as t } from '@nextcloud/l10n'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
-import NcLoadingIcon from '@nextcloud/vue/components/NcLoadingIcon'
 import { defineComponent } from 'vue'
 
 import { normalizeVrmViewerError, type VrmViewerErrorCode } from '../vrm/errors.ts'
@@ -82,7 +73,6 @@ export default defineComponent({
 	components: {
 		NcButton,
 		NcIconSvgWrapper,
-		NcLoadingIcon,
 	},
 
 	props: {
@@ -142,17 +132,6 @@ export default defineComponent({
 		 */
 		sourceUrl(): string {
 			return this.source ?? this.davPath ?? ''
-		},
-
-		/**
-		 * 現在の読み込み段階に対応するメッセージを返します。
-		 *
-		 * @return 翻訳済みの状態メッセージ
-		 */
-		loadingMessage(): string {
-			return this.state === 'preparing'
-				? t('files_vrmviewer', 'Preparing 3D preview…')
-				: t('files_vrmviewer', 'Loading VRM model…')
 		},
 
 		/**
