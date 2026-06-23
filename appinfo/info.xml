@@ -9,7 +9,7 @@
 	<name>VRM Viewer</name>
 	<summary>Preview VRM avatars directly from Files</summary>
 	<description><![CDATA[Open VRM 0.x and VRM 1.0 avatar files in an interactive 3D viewer directly from the Nextcloud Files app.]]></description>
-	<version>0.1.0</version>
+	<version>0.1.1</version>
 	<licence>agpl</licence>
 	<author mail="chim@chimonakiko.net">chimonakiko</author>
 	<namespace>Files_VRMViewer</namespace>
