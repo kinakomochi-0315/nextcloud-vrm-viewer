@@ -8,4 +8,5 @@ test-results/
 playwright-report/
 .test-fixtures/
 .php-cs-fixer.cache
+.phpunit.cache/
 .DS_Store

@@ -11,6 +11,7 @@ namespace OCA\Files_VRMViewer\AppInfo;
 
 use OCA\Files\Event\LoadAdditionalScriptsEvent;
 use OCA\Files_VRMViewer\Listener\LoadFilesScriptsListener;
+use OCA\Files_VRMViewer\Preview\VrmPreviewProvider;
 use OCP\AppFramework\App;
 use OCP\AppFramework\Bootstrap\IBootContext;
 use OCP\AppFramework\Bootstrap\IBootstrap;
@@ -39,6 +40,10 @@ class Application extends App implements IBootstrap {
 		$context->registerEventListener(
 			LoadAdditionalScriptsEvent::class,
 			LoadFilesScriptsListener::class,
+		);
+		$context->registerPreviewProvider(
+			VrmPreviewProvider::class,
+			'/\A(?:model\/vrm|application\/octet-stream)\z/',
 		);
 	}
 

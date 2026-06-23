@@ -36,6 +36,7 @@ jobs:
           coverage: none
       - run: composer install --no-interaction --no-progress
       - run: composer lint
+      - run: composer test
       - run: composer cs:check
 
   e2e:

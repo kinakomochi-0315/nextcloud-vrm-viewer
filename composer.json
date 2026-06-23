@@ -13,17 +13,24 @@
 			"OCA\\Files_VRMViewer\\": "lib/"
 		}
 	},
+	"autoload-dev": {
+		"psr-4": {
+			"OCA\\Files_VRMViewer\\Tests\\": "tests/php/"
+		}
+	},
 	"scripts": {
 		"lint": "find . -name \\*.php -not -path './vendor/*' -not -path './vendor-bin/*' -not -path './node_modules/*' -not -path './build/*' -print0 | xargs -0 -n1 php -l",
 		"cs:check": "php-cs-fixer fix --dry-run --diff",
-		"cs:fix": "php-cs-fixer fix"
+		"cs:fix": "php-cs-fixer fix",
+		"test": "phpunit"
 	},
 	"require": {
 		"php": "^8.2"
 	},
 	"require-dev": {
 		"nextcloud/coding-standard": "^1.3",
-		"nextcloud/ocp": "dev-stable34"
+		"nextcloud/ocp": "dev-stable34",
+		"phpunit/phpunit": "^11.5"
 	},
 	"config": {
 		"optimize-autoloader": true,

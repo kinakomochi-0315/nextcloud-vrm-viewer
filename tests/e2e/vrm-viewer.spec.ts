@@ -14,7 +14,33 @@ import { expect, test } from '@playwright/test'
  */
 async function openModelsFolder(page: Page): Promise<void> {
 	await page.goto('/apps/files/?dir=/Models')
-	await expect(page.locator('[data-cy-files-list-row]')).toHaveCount(4)
+	await expect(page.locator('[data-cy-files-list-row]')).toHaveCount(5)
+}
+
+/**
+ * Files一覧で表示される画像の最終的なContent-Typeを取得します。
+ *
+ * @param page Playwrightページ
+ * @param filename 確認するファイル名
+ * @return 画像要素がない場合は`null`
+ */
+async function getListImageContentType(page: Page, filename: string): Promise<string | null> {
+	const row = page.locator(`[data-cy-files-list-row-name="${filename}"]`)
+	const image = row.locator('img.files-list__row-icon-preview')
+	if (await image.count() === 0) {
+		return null
+	}
+
+	await expect(image).toHaveAttribute('src', /.+/u)
+	const source = await image.getAttribute('src')
+	if (!source) {
+		return null
+	}
+
+	const response = await page.context().request.get(source)
+	expect(response.ok()).toBe(true)
+
+	return response.headers()['content-type'] ?? null
 }
 
 /**
@@ -43,6 +69,23 @@ async function expectReadyViewer(page: Page) {
 test.describe('VRM Viewer', () => {
 	test.beforeEach(async ({ page }) => {
 		await openModelsFolder(page)
+	})
+
+	test('VRM 0.xと1.0の埋め込みサムネイルをFiles一覧へ表示する', async ({ page }) => {
+		await expect.poll(
+			() => getListImageContentType(page, 'vrm_v0_sample.vrm'),
+		).toContain('image/png')
+		await expect.poll(
+			() => getListImageContentType(page, 'vrm_v1_sample.vrm'),
+		).toContain('image/png')
+		await expect.poll(
+			() => getListImageContentType(page, 'uppercase_sample.VRM'),
+		).toContain('image/png')
+	})
+
+	test('埋め込みサムネイルがないVRMは通常アイコンへフォールバックする', async ({ page }) => {
+		const contentType = await getListImageContentType(page, 'no_thumbnail.vrm')
+		expect(contentType ?? '').not.toMatch(/^image\/(?:png|jpeg)/u)
 	})
 
 	test('VRM 1.0をクリックで開き、基本操作を表示する', async ({ page }) => {

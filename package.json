@@ -1,6 +1,6 @@
 {
 	"name": "files_vrmviewer",
-	"version": "0.1.1",
+	"version": "0.2.0",
 	"description": "VRM file viewer for Nextcloud",
 	"license": "AGPL-3.0-or-later",
 	"private": true,
@@ -10,8 +10,8 @@
 		"dev": "vite --mode development build",
 		"watch": "vite --mode development build --watch",
 		"typecheck": "vue-tsc --noEmit",
-		"lint": "eslint src --ext .ts,.vue && if [ -d tests ]; then eslint tests --ext .ts; fi",
-		"lint:fix": "eslint src --ext .ts,.vue --fix && if [ -d tests ]; then eslint tests --ext .ts --fix; fi",
+		"lint": "eslint src --ext .ts,.vue && if [ -d tests ]; then eslint tests --ext .ts,.mjs; fi",
+		"lint:fix": "eslint src --ext .ts,.vue --fix && if [ -d tests ]; then eslint tests --ext .ts,.mjs --fix; fi",
 		"stylelint": "stylelint 'src/**/*.{vue,css,scss}'",
 		"stylelint:fix": "stylelint 'src/**/*.{vue,css,scss}' --fix",
 		"test": "vitest run",
