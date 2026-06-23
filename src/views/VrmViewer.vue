@@ -38,12 +38,6 @@
 				{{ t('files_vrmviewer', 'Reset camera') }}
 			</NcButton>
 		</div>
-
-		<div v-if="state === 'ready'"
-			class="vrm-viewer__filename"
-			:title="basename">
-			{{ basename }}
-		</div>
 	</div>
 </template>
 
@@ -353,34 +347,10 @@ export default defineComponent({
 	z-index: 2;
 }
 
-.vrm-viewer__filename {
-	position: absolute;
-	bottom: 28px;
-	inset-inline-start: 24px;
-	max-width: min(50%, 520px);
-	padding: 7px 12px;
-	overflow: hidden;
-	color: var(--color-main-text);
-	font-size: 13px;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-	background: rgb(255 255 255 / 86%);
-	border: 1px solid var(--color-border);
-	border-radius: var(--border-radius-large);
-	box-shadow: 0 2px 10px rgb(9 30 66 / 10%);
-	backdrop-filter: blur(8px);
-}
-
 @media (width <= 640px) {
 	.vrm-viewer__toolbar {
 		inset-inline-end: 12px;
 		bottom: 12px;
-	}
-
-	.vrm-viewer__filename {
-		bottom: 64px;
-		inset-inline-start: 12px;
-		max-width: calc(100% - 24px);
 	}
 }
 </style>

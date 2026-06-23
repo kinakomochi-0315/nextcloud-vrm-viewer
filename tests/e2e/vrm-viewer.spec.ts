@@ -114,7 +114,7 @@ test.describe('VRM Viewer', () => {
 		await expectReadyViewer(page)
 
 		await page.keyboard.press('ArrowRight')
-		await expect(page.locator('.vrm-viewer__filename')).toHaveText('vrm_v1_sample.vrm')
+		await expect(page.getByRole('dialog', { name: 'vrm_v1_sample.vrm' })).toBeVisible()
 		await expectReadyViewer(page)
 
 		await page.keyboard.press('Escape')
