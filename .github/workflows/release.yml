@@ -20,7 +20,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      - run: npm ci --engine-strict=false
       - name: Verify tag and manifest version
         run: |
           version="$(node --print "require('./package.json').version")"

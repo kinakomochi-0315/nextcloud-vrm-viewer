@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      - run: npm ci --engine-strict=false
       - run: npm run typecheck
       - run: npm run lint
       - run: npm run stylelint
@@ -47,7 +47,7 @@ jobs:
         with:
           node-version: 24
           cache: npm
-      - run: npm ci
+      - run: npm ci --engine-strict=false
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - run: docker compose up -d
