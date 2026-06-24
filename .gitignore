@@ -10,3 +10,4 @@ playwright-report/
 .php-cs-fixer.cache
 .phpunit.cache/
 .DS_Store
+.idea
