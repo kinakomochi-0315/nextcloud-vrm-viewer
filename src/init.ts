@@ -6,6 +6,7 @@
 import type { AsyncComponent } from 'vue'
 
 import { registerHandler } from '@nextcloud/viewer'
+import '@nextcloud/dialogs/style.css'
 
 import { registerVrmFileAction } from './viewer/registerVrmFileAction.ts'
 

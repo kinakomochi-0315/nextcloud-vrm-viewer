@@ -13,9 +13,11 @@ import VrmViewer from '../../src/views/VrmViewer.vue'
 import { vrmViewerDependencies } from '../../src/views/vrmViewerDependencies.ts'
 
 const testMocks = {
+	rendererPlayAnimation: vi.fn(),
 	rendererDispose: vi.fn(),
 	rendererMount: vi.fn(),
 	rendererResetCamera: vi.fn(),
+	rendererStopAnimation: vi.fn(),
 }
 
 /**
@@ -56,7 +58,9 @@ describe('VrmViewer', () => {
 		vi.restoreAllMocks()
 		testMocks.rendererDispose.mockClear()
 		testMocks.rendererMount.mockClear()
+		testMocks.rendererPlayAnimation.mockClear()
 		testMocks.rendererResetCamera.mockClear()
+		testMocks.rendererStopAnimation.mockClear()
 	})
 
 	it('非アクティブな前後プレビューではVRMを取得しない', async () => {
@@ -93,7 +97,9 @@ describe('VrmViewer', () => {
 		vi.spyOn(vrmViewerDependencies, 'createRenderer').mockReturnValue({
 			dispose: testMocks.rendererDispose,
 			mount: testMocks.rendererMount,
+			playAnimation: testMocks.rendererPlayAnimation,
 			resetCamera: testMocks.rendererResetCamera,
+			stopAnimation: testMocks.rendererStopAnimation,
 		} as unknown as VrmRenderer)
 		const wrapper = mountViewer(false)
 
@@ -105,6 +111,95 @@ describe('VrmViewer', () => {
 		expect(wrapper.attributes('data-vrm-state')).toBe('ready')
 		expect(wrapper.attributes('data-vrm-version')).toBe('1')
 		expect(wrapper.emitted('update:loaded')?.at(-1)).toEqual([true])
+		wrapper.destroy()
+	})
+
+	it('選択したVRMAを読み込みRendererで再生する', async () => {
+		const vrm = {
+			scene: {},
+		}
+		const clip = {}
+		vi.spyOn(vrmViewerDependencies, 'loadVrm').mockResolvedValue({
+			version: '1',
+			vrm,
+		} as never)
+		vi.spyOn(vrmViewerDependencies, 'createRenderer').mockReturnValue({
+			dispose: testMocks.rendererDispose,
+			mount: testMocks.rendererMount,
+			playAnimation: testMocks.rendererPlayAnimation,
+			resetCamera: testMocks.rendererResetCamera,
+			stopAnimation: testMocks.rendererStopAnimation,
+		} as unknown as VrmRenderer)
+		const pickVrmaFileSpy = vi.spyOn(vrmViewerDependencies, 'pickVrmaFile').mockResolvedValue({
+			basename: 'motion.vrma',
+			source: 'http://localhost/remote.php/dav/files/admin/Models/motion.vrma',
+			type: 'file',
+		} as never)
+		const loadVrmaAnimationSpy = vi.spyOn(
+			vrmViewerDependencies,
+			'loadVrmaAnimation',
+		).mockResolvedValue({
+			clip,
+			duration: 1,
+			name: 'motion.vrma',
+			source: 'http://localhost/remote.php/dav/files/admin/Models/motion.vrma',
+		} as never)
+		const wrapper = mountViewer(true)
+		await flushVueUpdates()
+
+		const loadButton = wrapper.findAll('button').wrappers
+			.find(button => button.text().includes('Load VRMA'))
+		expect(loadButton).toBeTruthy()
+		await loadButton?.trigger('click')
+		await flushVueUpdates()
+		await flushVueUpdates()
+
+		expect(pickVrmaFileSpy).toHaveBeenCalledWith('/Models')
+		expect(loadVrmaAnimationSpy).toHaveBeenCalledWith(
+			'http://localhost/remote.php/dav/files/admin/Models/motion.vrma',
+			'motion.vrma',
+			vrm,
+			expect.any(AbortSignal),
+		)
+		expect(testMocks.rendererPlayAnimation).toHaveBeenCalledWith(clip)
+		expect(wrapper.text()).toContain('Stop animation')
+		wrapper.destroy()
+	})
+
+	it('VRMA読み込み失敗時もVRMプレビューはreadyのまま維持する', async () => {
+		vi.spyOn(vrmViewerDependencies, 'loadVrm').mockResolvedValue({
+			version: '1',
+			vrm: {
+				scene: {},
+			},
+		} as never)
+		vi.spyOn(vrmViewerDependencies, 'createRenderer').mockReturnValue({
+			dispose: testMocks.rendererDispose,
+			mount: testMocks.rendererMount,
+			playAnimation: testMocks.rendererPlayAnimation,
+			resetCamera: testMocks.rendererResetCamera,
+			stopAnimation: testMocks.rendererStopAnimation,
+		} as unknown as VrmRenderer)
+		vi.spyOn(vrmViewerDependencies, 'pickVrmaFile').mockResolvedValue({
+			basename: 'broken.vrma',
+			source: 'http://localhost/remote.php/dav/files/admin/Models/broken.vrma',
+			type: 'file',
+		} as never)
+		vi.spyOn(vrmViewerDependencies, 'loadVrmaAnimation').mockRejectedValue(
+			new VrmViewerError('invalid-vrma', 'Invalid test VRMA'),
+		)
+		const wrapper = mountViewer(true)
+		await flushVueUpdates()
+
+		const loadButton = wrapper.findAll('button').wrappers
+			.find(button => button.text().includes('Load VRMA'))
+		await loadButton?.trigger('click')
+		await flushVueUpdates()
+		await flushVueUpdates()
+
+		expect(wrapper.attributes('data-vrm-state')).toBe('ready')
+		expect(wrapper.text()).toContain('The selected file does not contain valid VRMA animation data.')
+		expect(wrapper.text()).not.toContain('Unable to display this VRM file')
 		wrapper.destroy()
 	})
 

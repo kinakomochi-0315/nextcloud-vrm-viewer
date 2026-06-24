@@ -10,6 +10,7 @@ export type VrmViewerErrorCode =
 	| 'download'
 	| 'external-resource'
 	| 'invalid-vrm'
+	| 'invalid-vrma'
 	| 'webgl'
 	| 'render'
 

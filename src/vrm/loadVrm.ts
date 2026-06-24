@@ -49,13 +49,18 @@ function configureCspCompatibleTextureLoader(parser: GLTFParser): void {
 }
 
 /**
- * Nextcloud WebDAVからVRMを取得し、対話表示向けに準備します。
+ * Nextcloud WebDAVから自己完結したGLBファイルを取得します。
  *
  * @param source 認証済みWebDAVファイルURL
  * @param signal 画面遷移時に通信を中止するためのシグナル
- * @return 読み込みとAポーズ適用が完了したVRM
+ * @param fileKind エラーメッセージに含めるファイル種別
+ * @return 検証済みのGLBバイナリ
  */
-export async function loadVrm(source: string, signal: AbortSignal): Promise<LoadedVrm> {
+export async function fetchSelfContainedGlb(
+	source: string,
+	signal: AbortSignal,
+	fileKind: 'VRM' | 'VRMA' = 'VRM',
+): Promise<ArrayBuffer> {
 	const url = resolveSafeSourceUrl(source)
 	let response: Response
 
@@ -68,13 +73,13 @@ export async function loadVrm(source: string, signal: AbortSignal): Promise<Load
 		if (signal.aborted) {
 			throw error
 		}
-		throw new VrmViewerError('download', 'Failed to download the VRM file', { cause: error })
+		throw new VrmViewerError('download', `Failed to download the ${fileKind} file`, { cause: error })
 	}
 
 	if (!response.ok) {
 		throw new VrmViewerError(
 			'download',
-			`Failed to download the VRM file: HTTP ${response.status}`,
+			`Failed to download the ${fileKind} file: HTTP ${response.status}`,
 		)
 	}
 
@@ -82,8 +87,21 @@ export async function loadVrm(source: string, signal: AbortSignal): Promise<Load
 	assertSelfContainedGlb(buffer)
 
 	if (signal.aborted) {
-		throw new DOMException('The VRM load was aborted', 'AbortError')
+		throw new DOMException(`The ${fileKind} load was aborted`, 'AbortError')
 	}
+
+	return buffer
+}
+
+/**
+ * Nextcloud WebDAVからVRMを取得し、対話表示向けに準備します。
+ *
+ * @param source 認証済みWebDAVファイルURL
+ * @param signal 画面遷移時に通信を中止するためのシグナル
+ * @return 読み込みとAポーズ適用が完了したVRM
+ */
+export async function loadVrm(source: string, signal: AbortSignal): Promise<LoadedVrm> {
+	const buffer = await fetchSelfContainedGlb(source, signal)
 
 	try {
 		const loader = new GLTFLoader()

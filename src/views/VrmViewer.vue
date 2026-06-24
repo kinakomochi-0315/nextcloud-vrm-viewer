@@ -29,34 +29,67 @@
 
 		<div v-if="state === 'ready'"
 			class="vrm-viewer__toolbar">
-			<NcButton type="secondary"
-				:aria-label="t('files_vrmviewer', 'Reset camera')"
-				@click="resetCamera">
-				<template #icon>
-					<NcIconSvgWrapper :svg="restoreIcon" />
-				</template>
-				{{ t('files_vrmviewer', 'Reset camera') }}
-			</NcButton>
+			<p v-if="animationErrorMessage"
+				class="vrm-viewer__animation-error"
+				role="status">
+				{{ animationErrorMessage }}
+			</p>
+			<div class="vrm-viewer__toolbar-actions">
+				<NcButton type="secondary"
+					:aria-label="t('files_vrmviewer', 'Load VRMA')"
+					:disabled="animationState === 'loading'"
+					@click="selectVrmaAnimation">
+					<template #icon>
+						<NcIconSvgWrapper :svg="fileSearchIcon" />
+					</template>
+					{{ animationState === 'loading'
+						? t('files_vrmviewer', 'Loading VRMA')
+						: t('files_vrmviewer', 'Load VRMA') }}
+				</NcButton>
+				<NcButton v-if="animationState === 'playing'"
+					type="secondary"
+					:aria-label="t('files_vrmviewer', 'Stop animation')"
+					@click="stopVrmaAnimation()">
+					<template #icon>
+						<NcIconSvgWrapper :svg="stopIcon" />
+					</template>
+					{{ t('files_vrmviewer', 'Stop animation') }}
+				</NcButton>
+				<NcButton type="secondary"
+					:aria-label="t('files_vrmviewer', 'Reset camera')"
+					@click="resetCamera">
+					<template #icon>
+						<NcIconSvgWrapper :svg="restoreIcon" />
+					</template>
+					{{ t('files_vrmviewer', 'Reset camera') }}
+				</NcButton>
+			</div>
 		</div>
 	</div>
 </template>
 
 <script lang="ts">
+import type { INode } from '@nextcloud/files'
+import type { VRM } from '@pixiv/three-vrm'
 import type { PropType } from 'vue'
 
 import alertIcon from '@mdi/svg/svg/alert-circle-outline.svg?raw'
+import fileSearchIcon from '@mdi/svg/svg/file-search-outline.svg?raw'
 import reloadIcon from '@mdi/svg/svg/reload.svg?raw'
 import restoreIcon from '@mdi/svg/svg/restore.svg?raw'
+import stopIcon from '@mdi/svg/svg/stop-circle-outline.svg?raw'
 import { translate as t } from '@nextcloud/l10n'
 import NcButton from '@nextcloud/vue/components/NcButton'
 import NcIconSvgWrapper from '@nextcloud/vue/components/NcIconSvgWrapper'
 import { defineComponent } from 'vue'
 
+import { getVrmaPickerStartPath } from '../viewer/vrmaFileInfo.ts'
 import { normalizeVrmViewerError, type VrmViewerErrorCode } from '../vrm/errors.ts'
 import { VrmRenderer } from '../vrm/VrmRenderer.ts'
 import { vrmViewerDependencies } from './vrmViewerDependencies.ts'
 
 type ViewerState = 'idle' | 'loading' | 'preparing' | 'ready' | 'error'
+type AnimationState = 'idle' | 'loading' | 'playing'
 
 /**
  * Nextcloud Viewer内でVRMを読み込み、対話操作可能な3Dプレビューを表示します。
@@ -107,14 +140,20 @@ export default defineComponent({
 	data() {
 		return {
 			alertIcon,
+			animationAbortController: null as AbortController | null,
+			animationErrorCode: null as VrmViewerErrorCode | null,
+			animationState: 'idle' as AnimationState,
 			errorCode: null as VrmViewerErrorCode | null,
+			fileSearchIcon,
 			loadGeneration: 0,
 			reloadIcon,
 			restoreIcon,
+			stopIcon,
 			state: 'idle' as ViewerState,
 			vrmVersion: '',
 			abortController: null as AbortController | null,
 			renderer: null as VrmRenderer | null,
+			vrm: null as VRM | null,
 		}
 	},
 
@@ -150,6 +189,11 @@ export default defineComponent({
 					'files_vrmviewer',
 					'The selected file does not contain valid VRM data.',
 				)
+			case 'invalid-vrma':
+				return t(
+					'files_vrmviewer',
+					'The selected file does not contain valid VRMA animation data.',
+				)
 			case 'webgl':
 				return t('files_vrmviewer', 'WebGL is not available in this browser.')
 			default:
@@ -158,6 +202,49 @@ export default defineComponent({
 					'An unexpected error occurred while rendering the model.',
 				)
 			}
+		},
+
+		/**
+		 * VRMAロード失敗時にツールバーへ表示する短いメッセージを返します。
+		 *
+		 * @return 翻訳済みのVRMAエラーメッセージ
+		 */
+		animationErrorMessage(): string {
+			switch (this.animationErrorCode) {
+			case 'download':
+				return t(
+					'files_vrmviewer',
+					'The VRMA file could not be downloaded. Check your connection and permissions.',
+				)
+			case 'external-resource':
+				return t(
+					'files_vrmviewer',
+					'This VRMA file references external resources and cannot be played safely.',
+				)
+			case 'invalid-vrma':
+				return t(
+					'files_vrmviewer',
+					'The selected file does not contain valid VRMA animation data.',
+				)
+			case 'render':
+			case 'invalid-vrm':
+			case 'webgl':
+				return t(
+					'files_vrmviewer',
+					'The selected VRMA animation could not be played.',
+				)
+			default:
+				return ''
+			}
+		},
+
+		/**
+		 * VRMA FilePickerを開く初期フォルダーを返します。
+		 *
+		 * @return VRMと同じフォルダーのパス
+		 */
+		animationStartPath(): string {
+			return getVrmaPickerStartPath(this.filename)
 		},
 	},
 
@@ -194,7 +281,10 @@ export default defineComponent({
 			this.stopLoading(false)
 			this.state = 'loading'
 			this.errorCode = null
+			this.animationErrorCode = null
+			this.animationState = 'idle'
 			this.vrmVersion = ''
+			this.vrm = null
 			this.$emit('update:loaded', false)
 
 			await this.$nextTick()
@@ -230,6 +320,7 @@ export default defineComponent({
 				})
 				renderer.mount(loadedVrm.vrm)
 				this.renderer = renderer
+				this.vrm = loadedVrm.vrm
 				this.vrmVersion = loadedVrm.version
 				this.state = 'ready'
 				this.$emit('update:loaded', true)
@@ -256,13 +347,16 @@ export default defineComponent({
 		stopLoading(resetState: boolean): void {
 			this.abortController?.abort()
 			this.abortController = null
+			this.stopVrmaAnimation(false, resetState)
 			this.renderer?.dispose()
 			this.renderer = null
+			this.vrm = null
 			this.$emit('update:canSwipe', true)
 
 			if (resetState) {
 				this.state = 'idle'
 				this.vrmVersion = ''
+				this.animationErrorCode = null
 			}
 		},
 
@@ -289,6 +383,113 @@ export default defineComponent({
 		 */
 		resetCamera(): void {
 			this.renderer?.resetCamera()
+		},
+
+		/**
+		 * Nextcloud FilePickerで選択したVRMAを現在のVRMへ読み込みます。
+		 */
+		async selectVrmaAnimation(): Promise<void> {
+			if (!this.vrm || !this.renderer || this.animationState === 'loading') {
+				return
+			}
+
+			this.animationErrorCode = null
+
+			try {
+				const node = await vrmViewerDependencies.pickVrmaFile(this.animationStartPath)
+				if (!node) {
+					return
+				}
+
+				await this.loadVrmaFromNode(node)
+			} catch (error) {
+				const viewerError = normalizeVrmViewerError(error)
+				console.error('Failed to select VRMA file', {
+					code: viewerError.code,
+					filename: this.filename,
+					error: viewerError,
+				})
+				this.showAnimationError(viewerError.code)
+			}
+		},
+
+		/**
+		 * 指定されたVRMAノードを読み込み、Rendererでループ再生します。
+		 *
+		 * @param node FilePickerで選択されたVRMAファイル
+		 */
+		async loadVrmaFromNode(node: INode): Promise<void> {
+			if (!this.vrm || !this.renderer) {
+				return
+			}
+
+			const vrm = this.vrm as VRM
+			const generation = this.loadGeneration
+			this.animationAbortController?.abort()
+			this.renderer.stopAnimation()
+			this.animationErrorCode = null
+			this.animationState = 'loading'
+
+			const abortController = new AbortController()
+			this.animationAbortController = abortController
+
+			try {
+				const loadedAnimation = await vrmViewerDependencies.loadVrmaAnimation(
+					node.source,
+					node.basename,
+					vrm,
+					abortController.signal,
+				)
+				if (!this.active || generation !== this.loadGeneration || !this.renderer) {
+					return
+				}
+
+				this.renderer.playAnimation(loadedAnimation.clip)
+				this.animationState = 'playing'
+			} catch (error) {
+				if (abortController.signal.aborted) {
+					return
+				}
+
+				const viewerError = normalizeVrmViewerError(error)
+				console.error('Failed to load VRMA animation', {
+					code: viewerError.code,
+					filename: this.filename,
+					animation: node.basename,
+					error: viewerError,
+				})
+				this.showAnimationError(viewerError.code)
+			} finally {
+				if (this.animationAbortController === abortController) {
+					this.animationAbortController = null
+				}
+			}
+		},
+
+		/**
+		 * 再生中または読み込み中のVRMAを停止します。
+		 *
+		 * @param resetPose 停止後にAポーズへ戻すか
+		 * @param clearError 表示中のVRMAエラーを消すか
+		 */
+		stopVrmaAnimation(resetPose = true, clearError = true): void {
+			this.animationAbortController?.abort()
+			this.animationAbortController = null
+			this.renderer?.stopAnimation(resetPose)
+			this.animationState = 'idle'
+			if (clearError) {
+				this.animationErrorCode = null
+			}
+		},
+
+		/**
+		 * VRM本体を維持したままVRMAエラーだけを表示します。
+		 *
+		 * @param code 表示するエラー分類
+		 */
+		showAnimationError(code: VrmViewerErrorCode): void {
+			this.animationErrorCode = code
+			this.animationState = 'idle'
 		},
 	},
 })
@@ -345,12 +546,40 @@ export default defineComponent({
 	inset-inline-end: 24px;
 	bottom: 24px;
 	z-index: 2;
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	gap: 8px;
+}
+
+.vrm-viewer__toolbar-actions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.vrm-viewer__animation-error {
+	max-width: min(420px, calc(100vw - 48px));
+	margin: 0;
+	padding: 8px 12px;
+	border-radius: var(--border-radius);
+	background: var(--color-error);
+	color: var(--color-primary-text);
+	font-size: 0.9rem;
+	text-align: start;
 }
 
 @media (width <= 640px) {
 	.vrm-viewer__toolbar {
 		inset-inline-end: 12px;
+		inset-inline-start: 12px;
 		bottom: 12px;
+	}
+
+	.vrm-viewer__toolbar-actions,
+	.vrm-viewer__toolbar {
+		align-items: stretch;
 	}
 }
 </style>

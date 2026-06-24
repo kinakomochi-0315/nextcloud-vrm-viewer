@@ -4,13 +4,18 @@
  */
 
 import type { VRM } from '@pixiv/three-vrm'
+import type { AnimationAction, AnimationClip } from 'three'
 
+import { VRMLookAtQuaternionProxy } from '@pixiv/three-vrm-animation'
 import {
 	AmbientLight,
+	AnimationMixer,
 	Box3,
+	Clock,
 	Color,
 	DirectionalLight,
 	GridHelper,
+	LoopRepeat,
 	PerspectiveCamera,
 	Scene,
 	SRGBColorSpace,
@@ -21,12 +26,14 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 
 import { calculateCameraFit, type CameraFit } from './camera.ts'
 import { VrmViewerError } from './errors.ts'
+import { applyAPose } from './pose.ts'
 import { disposeObjectTree } from './resourceDisposer.ts'
 
 const CAMERA_FOV = 35
 const BACKGROUND_COLOR = 0xE4E9F0
 const GRID_PRIMARY_COLOR = 0x8792A2
 const GRID_SECONDARY_COLOR = 0xB8C0CC
+const LOOK_AT_PROXY_NAME = 'lookAtQuaternionProxy'
 
 /**
  * VRM描画中の操作開始・終了を親Viewerへ伝えるコールバックです。
@@ -42,13 +49,18 @@ export type VrmRendererCallbacks = {
 export class VrmRenderer {
 
 	private readonly camera = new PerspectiveCamera(CAMERA_FOV, 1, 0.01, 100)
+	private readonly clock = new Clock(false)
 	private readonly controls: OrbitControls
 	private readonly renderer: WebGLRenderer
 	private readonly resizeObserver: ResizeObserver
 	private readonly scene = new Scene()
+	private activeAction: AnimationAction | null = null
+	private animationFrameRequest: number | null = null
 	private cameraFit: CameraFit | null = null
+	private currentVrm: VRM | null = null
 	private disposed = false
 	private frameRequest: number | null = null
+	private mixer: AnimationMixer | null = null
 
 	/**
 	 * 描画先コンテナへWebGL Canvasを作成します。
@@ -100,6 +112,8 @@ export class VrmRenderer {
 			throw new VrmViewerError('render', 'The renderer has already been disposed')
 		}
 
+		this.currentVrm = vrm
+		this.addLookAtProxy(vrm)
 		this.scene.add(vrm.scene)
 
 		const box = new Box3().setFromObject(vrm.scene)
@@ -113,6 +127,56 @@ export class VrmRenderer {
 		this.cameraFit = calculateCameraFit(box, CAMERA_FOV, this.camera.aspect)
 		this.applyCameraFit()
 		this.requestRender()
+	}
+
+	/**
+	 * 読み込み済みVRMAのAnimationClipを現在のVRMでループ再生します。
+	 *
+	 * @param clip 再生するVRMA由来のAnimationClip
+	 */
+	public playAnimation(clip: AnimationClip): void {
+		if (this.disposed) {
+			throw new VrmViewerError('render', 'The renderer has already been disposed')
+		}
+		if (!this.currentVrm) {
+			throw new VrmViewerError('render', 'No VRM has been mounted')
+		}
+
+		this.stopAnimation(false)
+		this.mixer = new AnimationMixer(this.currentVrm.scene)
+		this.activeAction = this.mixer.clipAction(clip)
+		this.activeAction
+			.reset()
+			.setLoop(LoopRepeat, Infinity)
+			.play()
+		this.clock.start()
+		this.requestAnimationFrame()
+	}
+
+	/**
+	 * 再生中のVRMAを停止し、必要に応じてVRMをAポーズへ戻します。
+	 *
+	 * @param resetPose 停止後にAポーズへ戻すか
+	 */
+	public stopAnimation(resetPose = true): void {
+		if (this.animationFrameRequest !== null) {
+			cancelAnimationFrame(this.animationFrameRequest)
+			this.animationFrameRequest = null
+		}
+
+		this.clock.stop()
+		this.activeAction?.stop()
+		this.activeAction = null
+		this.mixer?.stopAllAction()
+		if (this.mixer && this.currentVrm) {
+			this.mixer.uncacheRoot(this.currentVrm.scene)
+		}
+		this.mixer = null
+
+		if (resetPose && this.currentVrm) {
+			applyAPose(this.currentVrm)
+			this.requestRender()
+		}
 	}
 
 	/**
@@ -136,6 +200,7 @@ export class VrmRenderer {
 			cancelAnimationFrame(this.frameRequest)
 			this.frameRequest = null
 		}
+		this.stopAnimation(false)
 
 		this.resizeObserver.disconnect()
 		this.controls.removeEventListener('change', this.requestRender)
@@ -147,6 +212,21 @@ export class VrmRenderer {
 		this.renderer.dispose()
 		this.renderer.forceContextLoss()
 		this.renderer.domElement.remove()
+	}
+
+	/**
+	 * LookAtトラックの再生に必要なQuaternion ProxyをVRMへ追加します。
+	 *
+	 * @param vrm Proxyを追加するVRM
+	 */
+	private addLookAtProxy(vrm: VRM): void {
+		if (!vrm.lookAt || vrm.scene.getObjectByName(LOOK_AT_PROXY_NAME)) {
+			return
+		}
+
+		const lookAtProxy = new VRMLookAtQuaternionProxy(vrm.lookAt)
+		lookAtProxy.name = LOOK_AT_PROXY_NAME
+		vrm.scene.add(lookAtProxy)
 	}
 
 	/**
@@ -241,7 +321,7 @@ export class VrmRenderer {
 	 * 同一フレーム内の描画要求をまとめて一度だけレンダリングします。
 	 */
 	private readonly requestRender = (): void => {
-		if (this.disposed || this.frameRequest !== null) {
+		if (this.disposed || this.frameRequest !== null || this.animationFrameRequest !== null) {
 			return
 		}
 
@@ -251,6 +331,33 @@ export class VrmRenderer {
 				this.renderer.render(this.scene, this.camera)
 			}
 		})
+	}
+
+	/**
+	 * VRMA再生用の次フレーム描画を予約します。
+	 */
+	private requestAnimationFrame(): void {
+		if (this.disposed || this.animationFrameRequest !== null || !this.activeAction) {
+			return
+		}
+
+		this.animationFrameRequest = requestAnimationFrame(this.renderAnimationFrame)
+	}
+
+	/**
+	 * VRMA再生中の時間更新と描画を行います。
+	 */
+	private readonly renderAnimationFrame = (): void => {
+		this.animationFrameRequest = null
+		if (this.disposed || !this.currentVrm || !this.mixer || !this.activeAction) {
+			return
+		}
+
+		const delta = this.clock.getDelta()
+		this.mixer.update(delta)
+		this.currentVrm.update(delta)
+		this.renderer.render(this.scene, this.camera)
+		this.requestAnimationFrame()
 	}
 
 }

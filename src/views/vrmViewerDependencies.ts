@@ -6,8 +6,10 @@
 import type { VrmRendererCallbacks } from '../vrm/VrmRenderer.ts'
 
 import { loadVrm } from '../vrm/loadVrm.ts'
+import { loadVrmaAnimation } from '../vrm/loadVrma.ts'
 import { disposeObjectTree } from '../vrm/resourceDisposer.ts'
 import { VrmRenderer } from '../vrm/VrmRenderer.ts'
+import { pickVrmaFile } from '../viewer/vrmaFilePicker.ts'
 
 /**
  * VRM Viewerコンポーネントが利用する副作用をまとめた依存オブジェクトです。
@@ -17,6 +19,8 @@ import { VrmRenderer } from '../vrm/VrmRenderer.ts'
  */
 export const vrmViewerDependencies = {
 	loadVrm,
+	loadVrmaAnimation,
+	pickVrmaFile,
 	disposeObjectTree,
 
 	/**

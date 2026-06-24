@@ -14,7 +14,7 @@ import { expect, test } from '@playwright/test'
  */
 async function openModelsFolder(page: Page): Promise<void> {
 	await page.goto('/apps/files/?dir=/Models')
-	await expect(page.locator('[data-cy-files-list-row]')).toHaveCount(5)
+	await expect(page.locator('[data-cy-files-list-row]')).toHaveCount(6)
 }
 
 /**
@@ -131,6 +131,22 @@ test.describe('VRM Viewer', () => {
 		await expectReadyViewer(page)
 		expect(externalRuntimeRequests).toEqual([])
 		expect(textureErrors).toEqual([])
+	})
+
+	test('Nextcloud内のVRMAを選択して再生と停止を実行する', async ({ page }) => {
+		await openVrmFile(page, 'vrm_v1_sample.vrm')
+		await expectReadyViewer(page)
+
+		await page.getByRole('button', { name: 'Load VRMA' }).click()
+		const picker = page.getByRole('dialog', { name: 'Select VRMA animation' })
+		await expect(picker).toBeVisible()
+		await picker.getByText('test.vrma').click()
+		await picker.getByRole('button', { name: 'Load' }).click()
+
+		await expect(page.getByRole('button', { name: 'Stop animation' })).toBeVisible()
+		await page.getByRole('button', { name: 'Stop animation' }).click()
+		await expect(page.getByRole('button', { name: 'Stop animation' })).toHaveCount(0)
+		await expectReadyViewer(page)
 	})
 
 	test('VRM 0.xをAポーズ用の互換処理で開く', async ({ page }) => {

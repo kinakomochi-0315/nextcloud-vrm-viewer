@@ -63,5 +63,6 @@ upload_fixture "${fixture_dir}/vrm_v1_sample.vrm" "vrm_v1_sample.vrm"
 upload_fixture "${fixture_dir}/vrm_v1_sample.vrm" "uppercase_sample.VRM"
 upload_fixture "${fixture_dir}/broken.vrm" "broken.vrm"
 upload_fixture "${fixture_dir}/no_thumbnail.vrm" "no_thumbnail.vrm"
+upload_fixture "${fixture_dir}/test.vrma" "test.vrma"
 
 mkdir -p .test-fixtures/playwright

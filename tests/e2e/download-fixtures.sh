@@ -34,3 +34,7 @@ download_and_verify \
 	"${fixture_dir}/vrm_v1_sample.vrm" \
 	"12c2b97e95e700783a6a550dc0eee2d7880aeedccef9ae67bc4c5a2f0f2631a2"
 
+download_and_verify \
+	"https://raw.githubusercontent.com/pixiv/three-vrm/63dd83ce7834b4b8ffaedda71c7d8e5fffa421dd/packages/three-vrm-animation/examples/models/test.vrma" \
+	"${fixture_dir}/test.vrma" \
+	"38d0fd12d61e896f1a970b5e358ebb41a96c8d5ee8e284496ea18f0ba1f04e7b"
