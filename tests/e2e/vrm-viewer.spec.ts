@@ -14,7 +14,13 @@ import { expect, test } from '@playwright/test'
  */
 async function openModelsFolder(page: Page): Promise<void> {
 	await page.goto('/apps/files/?dir=/Models')
-	await expect(page.locator('[data-cy-files-list-row]')).toHaveCount(6)
+	await expect(page.locator('[data-cy-files-list-row-name="vrm_v0_sample.vrm"]')).toBeVisible()
+	await expect(page.locator('[data-cy-files-list-row-name="vrm_v1_sample.vrm"]')).toBeVisible()
+	await expect(page.locator('[data-cy-files-list-row-name="uppercase_sample.VRM"]')).toBeVisible()
+	await expect(page.locator('[data-cy-files-list-row-name="broken.vrm"]')).toBeVisible()
+	await expect(page.locator('[data-cy-files-list-row-name="no_thumbnail.vrm"]')).toBeVisible()
+	await expect(page.locator('[data-cy-files-list-row-name="test.vrma"]')).toBeVisible()
+	await expect(page.locator('[data-cy-files-list-row-name="Animations"]')).toBeVisible()
 }
 
 /**
@@ -140,7 +146,23 @@ test.describe('VRM Viewer', () => {
 		await page.getByRole('button', { name: 'Load VRMA' }).click()
 		const picker = page.getByRole('dialog', { name: 'Select VRMA animation' })
 		await expect(picker).toBeVisible()
-		await picker.getByText('test.vrma').click()
+		await expect(picker).toHaveClass(/modal-mask/)
+		const pickerBackground = await picker.evaluate(
+			(element) => getComputedStyle(element).backgroundColor,
+		)
+		expect(pickerBackground).not.toBe('rgba(0, 0, 0, 0)')
+		expect(pickerBackground).not.toBe('transparent')
+		expect(await picker.evaluate((element) => Boolean(element.closest('#viewer')))).toBe(false)
+
+		// VRMA以外のファイルは隠しつつ、子フォルダーへは移動できることを確認します。
+		await expect(
+			picker.locator('[data-testid="file-list-row"][data-filename="vrm_v1_sample.vrm"]'),
+		).toHaveCount(0)
+		await picker.locator('[data-testid="file-list-row"][data-filename="Animations"]').click()
+		await expect(
+			picker.locator('[data-testid="file-list-row"][data-filename="nested.vrma"]'),
+		).toBeVisible()
+		await picker.locator('[data-testid="file-list-row"][data-filename="nested.vrma"]').click()
 		await picker.getByRole('button', { name: 'Load' }).click()
 
 		await expect(page.getByRole('button', { name: 'Stop animation' })).toBeVisible()

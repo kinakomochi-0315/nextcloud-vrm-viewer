@@ -10,6 +10,7 @@ import { describe, expect, it } from 'vitest'
 import {
 	getVrmaPickerStartPath,
 	isVrmaFile,
+	isVrmaPickerVisibleNode,
 } from '../../src/viewer/vrmaFileInfo.ts'
 
 /**
@@ -38,6 +39,13 @@ describe('VRMA file info', () => {
 
 	it('フォルダーはVRMAとして選択しない', () => {
 		expect(isVrmaFile(createNode('motion.vrma', 'folder'))).toBe(false)
+	})
+
+	it('VRMA FilePickerではフォルダーとVRMAだけを一覧に表示する', () => {
+		expect(isVrmaPickerVisibleNode(createNode('Animations', 'folder'))).toBe(true)
+		expect(isVrmaPickerVisibleNode(createNode('motion.vrma'))).toBe(true)
+		expect(isVrmaPickerVisibleNode(createNode('avatar.vrm'))).toBe(false)
+		expect(isVrmaPickerVisibleNode(createNode('memo.txt'))).toBe(false)
 	})
 
 	it('VRMファイルと同じフォルダーをFilePicker開始位置にする', () => {

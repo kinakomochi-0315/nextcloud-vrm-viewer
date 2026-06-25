@@ -19,6 +19,18 @@ export function isVrmaFile(node: INode): boolean {
 }
 
 /**
+ * VRMA FilePickerの一覧へ表示するノードか判定します。
+ *
+ * 子フォルダーへ移動できるようフォルダーは表示し、ファイルはVRMAだけに絞ります。
+ *
+ * @param node 判定対象のファイルノード
+ * @return FilePickerの一覧へ表示する場合は`true`
+ */
+export function isVrmaPickerVisibleNode(node: INode): boolean {
+	return node.type === 'folder' || isVrmaFile(node)
+}
+
+/**
  * Viewerで表示中のVRMパスからFilePickerの開始フォルダーを求めます。
  *
  * @param filename Viewerから渡されたVRMのファイルパス
