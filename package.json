@@ -1,8 +1,8 @@
 {
 	"name": "files_vrmviewer",
-	"version": "0.2.0",
+	"version": "0.3.0",
 	"description": "VRM file viewer for Nextcloud",
-	"license": "AGPL-3.0-or-later",
+	"license": "MIT",
 	"private": true,
 	"type": "module",
 	"scripts": {

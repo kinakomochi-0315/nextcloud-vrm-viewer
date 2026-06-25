@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 /**
  * SPDX-FileCopyrightText: 2026 chimonakiko <chim@chimonakiko.net>
- * SPDX-License-Identifier: AGPL-3.0-or-later
+ * SPDX-License-Identifier: MIT
  */
 
 namespace OCA\Files_VRMViewer\Listener;

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # SPDX-FileCopyrightText: 2026 chimonakiko <chim@chimonakiko.net>
-# SPDX-License-Identifier: AGPL-3.0-or-later
+# SPDX-License-Identifier: MIT
 
 set -euo pipefail
 
@@ -25,7 +25,7 @@ archive="${artifact_dir}/${app_id}-${version}.tar.gz"
 rm -rf build/package "${artifact_dir}"
 mkdir -p "${staging_dir}" "${artifact_dir}"
 
-for path in appinfo css img js l10n lib LICENSE README.md; do
+for path in appinfo css img js l10n lib LICENSE README.md README.ja.md; do
 	cp -R "${path}" "${staging_dir}/"
 done
 

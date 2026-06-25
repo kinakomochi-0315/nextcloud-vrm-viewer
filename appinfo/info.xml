@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <!--
   - SPDX-FileCopyrightText: 2026 chimonakiko <chim@chimonakiko.net>
-  - SPDX-License-Identifier: AGPL-3.0-or-later
+  - SPDX-License-Identifier: MIT
 -->
 <info xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	  xsi:noNamespaceSchemaLocation="https://apps.nextcloud.com/schema/apps/info.xsd">
@@ -9,8 +9,8 @@
 	<name>VRM Viewer</name>
 	<summary>Preview VRM avatars directly from Files</summary>
 	<description><![CDATA[Open VRM 0.x and VRM 1.0 avatar files in an interactive 3D viewer directly from the Nextcloud Files app.]]></description>
-	<version>0.2.0</version>
-	<licence>agpl</licence>
+	<version>0.3.0</version>
+	<licence>mit</licence>
 	<author mail="chim@chimonakiko.net">chimonakiko</author>
 	<namespace>Files_VRMViewer</namespace>
 	<category>files</category>
