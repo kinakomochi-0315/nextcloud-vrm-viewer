@@ -2,6 +2,8 @@
 
 [Japanese](README.ja.md)
 
+![VRM Viewer screenshot](docs/appstore/viewer_thumb.png)
+
 VRM Viewer is a Nextcloud Files app that opens `.vrm` avatar files in an
 interactive 3D preview. It supports VRM 0.x, VRM 1.0, embedded VRM thumbnails,
 and playback of `.vrma` animation files stored in the same Nextcloud instance.
@@ -32,11 +34,11 @@ app does not render models server-side to generate new thumbnails.
 
 ## Installation
 
-Download `files_vrmviewer-0.3.0.tar.gz` from the GitHub Release, then extract it
+Download `files_vrmviewer-1.0.0.tar.gz` from the GitHub Release, then extract it
 into Nextcloud's `custom_apps` directory.
 
 ```bash
-tar -xzf files_vrmviewer-0.3.0.tar.gz -C /path/to/nextcloud/custom_apps
+tar -xzf files_vrmviewer-1.0.0.tar.gz -C /path/to/nextcloud/custom_apps
 sudo -u www-data php /path/to/nextcloud/occ app:enable files_vrmviewer
 ```
 
@@ -84,7 +86,7 @@ sudo -u www-data php occ maintenance:mimetype:update-js
 
 ## Limitations
 
-The following features are not part of v0.3.0:
+The following features are not part of v1.0.0:
 
 - Opening VRM files from public share links
 - Selecting local VRMA files directly from the browser
@@ -127,11 +129,11 @@ npm run package
 
 This creates:
 
-- `build/artifacts/files_vrmviewer-0.3.0.tar.gz`
-- `build/artifacts/files_vrmviewer-0.3.0.tar.gz.sha256`
+- `build/artifacts/files_vrmviewer-1.0.0.tar.gz`
+- `build/artifacts/files_vrmviewer-1.0.0.tar.gz.sha256`
 
 Release tags must match `package.json` and `appinfo/info.xml`. For example,
-version `0.3.0` should be released with tag `v0.3.0`.
+version `1.0.0` should be released with tag `v1.0.0`.
 
 ## Privacy and Network Behavior
 

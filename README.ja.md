@@ -2,6 +2,8 @@
 
 [English](README.md)
 
+![VRM Viewerのスクリーンショット](docs/appstore/viewer_thumb.png)
+
 VRM Viewerは、NextcloudのFiles画面から`.vrm`アバターファイルを直接開ける
 対話型3Dビューアーです。VRM 0.x、VRM 1.0、埋め込みVRMサムネイル、同じ
 Nextcloudインスタンス内に保存された`.vrma`アニメーションの再生に対応します。
@@ -32,11 +34,11 @@ Files一覧で標準のファイルアイコンへフォールバックします
 
 ## インストール
 
-GitHub Releaseから`files_vrmviewer-0.3.0.tar.gz`をダウンロードし、Nextcloudの
+GitHub Releaseから`files_vrmviewer-1.0.0.tar.gz`をダウンロードし、Nextcloudの
 `custom_apps`ディレクトリへ展開します。
 
 ```bash
-tar -xzf files_vrmviewer-0.3.0.tar.gz -C /path/to/nextcloud/custom_apps
+tar -xzf files_vrmviewer-1.0.0.tar.gz -C /path/to/nextcloud/custom_apps
 sudo -u www-data php /path/to/nextcloud/occ app:enable files_vrmviewer
 ```
 
@@ -84,7 +86,7 @@ sudo -u www-data php occ maintenance:mimetype:update-js
 
 ## 制限
 
-以下はv0.3.0の対象外です。
+以下はv1.0.0の対象外です。
 
 - 公開共有リンクからのVRMファイル表示
 - ブラウザーからのローカルVRMAファイル直接選択
@@ -127,11 +129,11 @@ npm run package
 
 以下が生成されます。
 
-- `build/artifacts/files_vrmviewer-0.3.0.tar.gz`
-- `build/artifacts/files_vrmviewer-0.3.0.tar.gz.sha256`
+- `build/artifacts/files_vrmviewer-1.0.0.tar.gz`
+- `build/artifacts/files_vrmviewer-1.0.0.tar.gz.sha256`
 
 リリースタグは`package.json`と`appinfo/info.xml`のバージョンと一致している必要があります。
-たとえばバージョン`0.3.0`はタグ`v0.3.0`でリリースします。
+たとえばバージョン`1.0.0`はタグ`v1.0.0`でリリースします。
 
 ## プライバシーとネットワーク挙動
 
